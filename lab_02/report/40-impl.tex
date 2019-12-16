@@ -1,0 +1,173 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+
+В данном разделе приводятся описания требований к программному обеспечению, средства реализации, листинги кода и описания тестирования.
+\section{Требования к программному обеспечению}
+Требования к вводу:
+\begin{itemize}
+    \item на вход подаются две матрицы;
+\end{itemize}
+Требования к выводу:
+\begin{itemize}
+    \item произведение матриц;
+\end{itemize}
+\section{Средства реализации}
+В качестве языка программирования мною был выбран python, так как данный язык программирования позволяет максимально лаконично и демонстративно реализовать необходимые алгоритмы.
+\section{Листинги кода}
+
+В листингах 3.1 - 3.3 приведена реализация описанных алгоритмов.
+\begin{lstlisting}[caption=Классическое умножение матриц]
+def mult_matrix(matrix_1, matrix_2):
+    a = len(matrix_1)
+    b = len(matrix_1[0])
+    c = len(matrix_2[0])
+    if (len(matrix_2) != b):
+        return
+
+    res_matrix = [[0 for i in range (c)] for j in range (a)]
+
+    for i in range (a):
+        for j in range (b):
+            for k in range (c):
+                res_matrix[i][k] += matrix_1[i][j] * matrix_2[j][k]
+
+    return res_matrix
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Алгоритм Винограда]
+def mult_matrix_winograd(matrix_1, matrix_2):
+    num_row_1 = len(matrix_1)       #a
+    num_col_1 = len(matrix_1[0])    #b
+    num_row_2 = len(matrix_2)       #b
+    num_col_2 = len(matrix_2[0])    #c
+
+    if (num_col_1 != num_row_2):
+        return
+
+    d = num_col_1 // 2
+
+    row_factor = [0 for i in range (num_row_1)]
+    col_factor = [0 for i in range (num_col_2)]
+
+    for i in range(num_row_1):
+        for j in range(d):
+            row_factor[i] = row_factor[i] + matrix_1[i][j * 2] * matrix_1[i][j * 2 + 1]
+
+    for i in range (num_col_2):
+        for j in range (d):
+            col_factor[i] = col_factor[i] + matrix_2[j * 2][i] * matrix_2[j * 2 + 1][i]
+
+    res_matrix = [[0 for i in range (num_col_2)] for i in range (num_row_1)]
+
+    for i in range (num_row_1):
+        for j in range (num_col_2):
+            res_matrix[i][j] = -row_factor[i] - col_factor[j]
+            for k in range (d):
+                res_matrix[i][j] = res_matrix[i][j] (matrix_1[i][k * 2 - 1] + matrix_2[2 * k][j]) * (matrix_1[i][k * 2] + matrix_2[2 * k - 1][j])
+
+    if (num_col_1 % 2):
+        for i in range (num_row_1):
+            for j in range (num_col_2):
+                res_matrix[i][j] = res_matrix[i][j] + matrix_1[i][num_col_1] * matrix_2[num_col_1][j]
+
+    return res_matrix
+\end{lstlisting}
+
+\noindent\begin{minipage}{\textwidth}
+\begin{lstlisting}[caption=Оптимизированный алгоритм Винограда]
+def mult_matrix_winograd_mod(matrix_1, matrix_2):
+    num_row_1 = len(matrix_1)       #a
+    num_col_1 = len(matrix_1[0])    #b
+    num_row_2 = len(matrix_2)       #b
+    num_col_2 = len(matrix_2[0])    #c
+
+    if (num_col_1 != num_row_2):
+        return
+
+    row_factor = [0 for i in range (num_row_1)]
+    col_factor = [0 for i in range (num_col_2)]
+
+    for i in range(0, num_row_1):
+        for j in range(1, num_col_1, 2):
+            row_factor[i] -= matrix_1[i][j] * matrix_1[i][j - 1]
+
+    for j in range(0, num_col_2):
+        for i in range(1, num_col_1, 2):
+            col_factor[j] -= matrix_2[i][j] * matrix_2[i - 1][j]
+
+    res_matrix = [[0 for i in range (num_col_2)] for i in range (num_row_1)]
+
+    for i in range(0, num_row_1):
+        for j in range(0, num_col_2):
+            res_matrix[i][j] = row_factor[i] + col_factor[j]
+            for k in range(1, num_col_1, 2):
+                res_matrix[i][j] += (matrix_1[i][k - 1] + matrix_2[k][j]) * (matrix_1[i][k] + matrix_2[k - 1][j])
+            if (1 == num_col_1 % 2):
+                res_matrix[i][j] += matrix_1[i][n - 1] * matrix_2[n - 1][j]
+
+    return res_matrix
+\end{lstlisting}
+\end{minipage}
+
+\section{Описание тестирования}
+Для тестирования программы были подготовлены данные, представленные в таблице 1.
+	\begin{center}
+		\begin{tabular}{  | c | c | c | }
+			\hline
+			\textbf{Матрица1} & \textbf{Матрица2} & \textbf{Ожидаемый результат} \\ \hline
+			$\begin{bmatrix} 
+   			1&2&3 \\
+    			4&5&6 \\ 
+   			7&8&9 \\ 
+			\end{bmatrix}$ & 
+			$\begin{bmatrix} 
+   			1&2&3 \\
+    			4&5&6 \\ 
+   			7&8&9 \\ 
+			\end{bmatrix}$ &
+			$\begin{bmatrix} 
+   			30&36&42 \\
+    			66&81&96 \\ 
+   			102&126&150 \\ 
+			\end{bmatrix} $ \\ \hline
+			
+			$\begin{bmatrix} 
+   			1&2&3 \\
+    			4&5&6 \\ 
+   			7&8&9 \\ 
+			\end{bmatrix}$ & 
+			$\begin{bmatrix} 
+   			1&2&3 \\
+    			4&5&6 \\ 
+			\end{bmatrix}$ &
+			$\text{Матрицы не могут быть перемножены}$ \\ \hline
+			
+			$\begin{bmatrix} 
+   			1&2 \\
+    			4&5 \\ 
+   			7&8 \\ 
+			\end{bmatrix}$ & 
+			$\begin{bmatrix} 
+   			1&2&3 \\
+    			4&5&6 \\ 
+			\end{bmatrix}$ &
+			$\begin{bmatrix} 
+   			9&12&15 \\
+    			24&33&42 \\ 
+   			39&54&69 \\ 
+			\end{bmatrix} $ \\ \hline
+		\end{tabular}
+		
+		\hfill
+		
+		Таблица 1.
+		Подготовленные тестовые данные.  
+	\end{center}
+	
+Все тесты были успешно пройдены.
+\section{Вывод}
+
+Были сформулированы требования к ПО, выбраны средства реализации и подготовлены тестовые данные.
+%%%% mode: latex
+%%%% TeX-master: "rpz"
+%%%% End:
