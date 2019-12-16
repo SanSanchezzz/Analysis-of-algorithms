@@ -1,0 +1,344 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+
+В данном разделе приводятся описания требований к программному обеспечению, средства реализации, листинги кода и описания тестирования.
+
+\section{Требования к программному обеспечению}
+
+Требования к вводу:
+\begin{itemize}
+    \item на вход подаются два слова;
+    \item каждое слово завершается символом переноса строки;
+    \item пустое слово допускается.
+\end{itemize}
+Требования к выводу:
+\begin{itemize}
+    \item редакционное расстояние;
+\end{itemize}
+
+\section{Средства реализации}
+
+В качестве языка программирования мною был выбран C++.
+
+Для измерения времени использовалась встроенная библиотека Chrono.
+
+\section{Листинги кода}
+
+В листингах 3.1 - 3.3 приведена реализация описанных алгоритмов.
+\begin{lstlisting}[caption=Расстояние Левенштейна (матричная реализация)]
+int levensteinDistance(char *str1, char *str2)
+{
+    unsigned lenStr1 = strlen(str1);
+    unsigned lenStr2 = strlen(str2);
+    unsigned rows, columns;
+    bool isNotSame;
+    int result;
+
+    if (lenStr1 == 0 || lenStr2 == 0)
+    {
+        return (lenStr1 > lenStr2) ? lenStr1 : lenStr2;
+    }
+
+    rows = lenStr1 + 1;
+    columns = lenStr2 + 1;
+
+    int *data[2];
+    data[0] = new int[columns];
+    data[1] = new int[columns];
+
+    for (unsigned i = 0; i < columns; i++)
+    {
+        data[0][i] = i;
+    }
+
+    for (unsigned i = 1; i < rows; i++)
+    {
+        data[1][0] = data[0][0] + 1;
+
+        for (unsigned j = 1; j < columns; j++)
+        {
+            isNotSame = (str1[i - 1] != str2[j - 1]) ? 1 : 0;
+
+            data[1][j] = my_min(data[1][j - 1] + 1, data[0][j] + 1, data[0][j - 1] + isNotSame);
+
+            cout << data[1][j] << " ";
+        }
+
+        cout << endl;
+
+        std::swap(data[1], data[0]);
+    }
+
+    result = data[0][columns - 1];
+
+    delete data[0];
+    delete data[1];
+
+    return result;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Расстояние Дамерау-Левенштейна (матричная реализация)]
+int levensteinDistanceTransposition(char *str1, char *str2)
+{
+    unsigned lenStr1 = strlen(str1);
+    unsigned lenStr2 = strlen(str2);
+    unsigned rows, columns;
+    bool isNotSameTrans;
+    bool isNotSame;
+    int result;
+
+    if (lenStr1 == 0 || lenStr2 == 0)
+    {
+        return (lenStr1 > lenStr2) ? lenStr1 : lenStr2;
+    }
+
+    if (lenStr1 < 2 || lenStr2 < 2)
+    {
+        return levensteinDistance(str1, str2);
+    }
+
+    rows = lenStr1 + 1;
+    columns = lenStr2 + 1;
+
+    int *data[3];
+    data[0] = new int[columns];
+    data[1] = new int[columns];
+    data[2] = new int[columns];
+
+    for (unsigned i = 0; i < columns; i++)
+    {
+        data[0][i] = i;
+    }
+
+    data[1][0] = 1;
+
+    for (unsigned j = 1; j < columns; j++)
+    {
+        isNotSame = (str1[0] != str2[j - 1]) ? 1 : 0;
+
+        data[1][j] = my_min(data[1][j - 1] + 1, data[0][j] + 1, data[0][j - 1] + isNotSame);
+    }
+
+    for (unsigned i = 2; i < rows; i++)
+    {
+        data[2][0] = data[1][0] + 1;
+
+        isNotSame = (str1[i - 1] != str2[0]) ? 1 : 0;
+
+        data[2][1] = my_min(data[1][1] + 1, data[2][0] + 1, data[1][0] + isNotSame);
+
+        for (unsigned j = 2; j < columns; j++)
+        {
+            //isNotSameTrans = ((str1[i - 1] != str2[j - 2]) && (str1[i -2] != str2[j - 1])) ? 1 : 0 ;
+            isNotSame = (str1[i - 1] != str2[j - 1]) ? 1 : 0;
+
+            if (((str1[i - 1] == str2[j - 2]) && (str1[i -2] == str2[j - 1])) ? 1 : 0)
+            {
+                data[2][j] = my_min(data[2][j - 1] + 1, data[1][j] + 1, data[1][j - 1] + isNotSame, data[0][j - 2] + 1);
+            }
+            else
+            {
+                data[2][j] = my_min(data[2][j - 1] + 1, data[1][j] + 1, data[1][j - 1] + isNotSame);
+            }
+        }
+
+        for (int j = 1; j < columns; j++)
+        {
+            cout << data[1][j] << " ";
+        }
+
+        cout << endl;
+
+        std::swap(data[0], data[1]);
+        std::swap(data[1], data[2]);
+    }
+
+    for (int i = 1; i < columns; i++)
+    {
+        cout << data[1][i] << " ";
+    }
+
+    cout << endl;
+
+    result = data[1][columns - 1];
+
+    delete data[0];
+    delete data[1];
+    delete data[2];
+
+    return result;
+}
+\end{lstlisting}
+
+\noindent\begin{minipage}{\textwidth}
+\begin{lstlisting}[caption=Расстояние Левенштейна (рекурсивная Дамерау-Левенштейна реализация)]
+int levensteinRecursiveDistance(char *str1, int lenStr1, char *str2, int lenStr2)
+{
+    bool isNotSame;
+    int result;
+
+    if (lenStr1 == 0)
+    {
+        return lenStr2;
+    }
+    if (lenStr2 == 0)
+    {
+        return lenStr1;
+    }
+
+    isNotSame = str1[lenStr1 - 1] != str2[lenStr2 - 1];
+
+    result = my_min(levensteinRecursiveDistance(str1, lenStr1 - 1, str2, lenStr2) + 1, levensteinRecursiveDistance(str1, lenStr1, str2, lenStr2 - 1),
+            levensteinRecursiveDistance(str1, lenStr1 - 1, str2, lenStr2 - 1) + isNotSame);
+
+    if (lenStr1 > 1 && lenStr2 > 1)
+    {
+        if (str1[lenStr1 - 1] == str2[lenStr2 - 2] && str1[lenStr1 - 2] == str2[lenStr2 - 1])
+        {
+            result = std::min(result, levensteinRecursiveDistance(str1, lenStr1 - 2, str2, lenStr2 - 2) + 1);
+        }
+    }
+
+    return result;
+}
+\end{lstlisting}
+\end{minipage}
+
+\section{Описание тестирования}
+Для тестирования программы были подготовлены данные, представленные в таблице 3.1.
+
+\begin{table}[H]
+    \caption{Тестовые данные}
+	\begin{tabular}{|c|c|c|c|c|}
+ 	\hline
+\No{} & Строка 1 & Строка 2 & \makecell{Ожидаемое расстояние\\Левенштейна} & \makecell{Ожидаемое расстояние\\Дамерау-Левенштейна} \\
+ 	\hline
+ 	1 & some & any & 4 & 4\\
+ 	\hline
+ 	2 & & nothing & 7 & 7\\
+ 	\hline
+ 	3 & & & 0 & 0\\
+ 	\hline
+ 	4 & bashrc & bashcr & 2 & 1\\
+ 	\hline
+ 	5 & bus & BuS & 2 & 2\\
+ 	\hline
+ 	6 & electricity & city & 7 & 7\\
+ 	\hline
+ 	7 & powerful & powerless & 4 & 4\\
+ 	\hline
+ 	8 & grow & flow & 2 & 2\\
+ 	\hline
+ 	9 & rise & rice & 1 & 1\\
+ 	\hline
+    10 & legal & illegal & 2 & 2\\
+ 	\hline
+    11 & same & same & 0 & 0\\
+    \hline
+	\end{tabular}
+\end{table}
+
+\section{Результаты тестирования}
+Тестирование всех трёх реализаций алгоритмов прошло успешно. Результаты тестов представлены в таблицах 4.1, 4.2, 4.3.
+
+\begin{table}[H]
+    \caption{Результаты тестирования алгоритма Вагнера-Фишера}
+	\begin{tabular}{|c|c|c|c|c|}
+ 	\hline
+    \No{} & Строка 1 & Строка 2 & \makecell{Расстояние\\Левенштейна} & \makecell{Ожидаемое расстояние\\Левенштейна} \\
+ 	\hline
+ 	1 & some & any & 4 & 4\\
+ 	\hline
+ 	2 & & nothing & 7 & 7\\
+ 	\hline
+ 	3 & & & 0 & 0\\
+ 	\hline
+ 	4 & bashrc & bashcr & 2 & 2\\
+ 	\hline
+ 	5 & bus & BuS & 2 & 2\\
+ 	\hline
+ 	6 & electricity & city & 7 & 7\\
+ 	\hline
+ 	7 & powerful & powerless & 4 & 4\\
+ 	\hline
+ 	8 & grow & flow & 2 & 2\\
+ 	\hline
+ 	9 & rise & rice & 1 & 1\\
+ 	\hline
+    10 & legal & illegal & 2 & 2\\
+ 	\hline
+    11 & same & same & 0 & 0\\
+    \hline
+	\end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \caption{Результаты тестирования рекурсивного алгоритма Дамерау-Левенштейна}
+	\begin{tabular}{|c|c|c|c|c|}
+ 	\hline
+    \No{} & Строка 1 & Строка 2 & \makecell{Расстояние\\Дамерау-Левенштейна} & \makecell{Ожидаемое расстояние\\Дамерау-Левенштейна} \\
+ 	\hline
+ 	1 & some & any & 4 & 4\\
+ 	\hline
+ 	2 & & nothing & 7 & 7\\
+ 	\hline
+ 	3 & & & 0 & 0\\
+ 	\hline
+ 	4 & bashrc & bashcr & 1 & 1\\
+ 	\hline
+ 	5 & bus & BuS & 2 & 2\\
+ 	\hline
+ 	6 & electricity & city & 7 & 7\\
+ 	\hline
+ 	7 & powerful & powerless & 4 & 4\\
+ 	\hline
+ 	8 & grow & flow & 2 & 2\\
+ 	\hline
+ 	9 & rise & rice & 1 & 1\\
+ 	\hline
+    10 & legal & illegal & 2 & 2\\
+ 	\hline
+    11 & same & same & 0 & 0\\
+    \hline
+	\end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \caption{Результаты тестирования рекурсивного алгоритма Дамерау-Левенштейна}
+	\begin{tabular}{|c|c|c|c|c|}
+ 	\hline
+    \No{} & Строка 1 & Строка 2 & \makecell{Расстояние\\Дамерау-Левенштейна} & \makecell{Ожидаемое расстояние\\Дамерау-Левенштейна} \\
+ 	\hline
+ 	1 & some & any & 4 & 4\\
+ 	\hline
+ 	2 & & nothing & 7 & 7\\
+ 	\hline
+ 	3 & & & 0 & 0\\
+ 	\hline
+ 	4 & bashrc & bashcr & 1 & 1\\
+ 	\hline
+ 	5 & bus & BuS & 2 & 2\\
+ 	\hline
+ 	6 & electricity & city & 7 & 7\\
+ 	\hline
+ 	7 & powerful & powerless & 4 & 4\\
+ 	\hline
+ 	8 & grow & flow & 2 & 2\\
+ 	\hline
+ 	9 & rise & rice & 1 & 1\\
+ 	\hline
+    10 & legal & illegal & 2 & 2\\
+ 	\hline
+    11 & same & same & 0 & 0\\
+    \hline
+	\end{tabular}
+\end{table}
+
+Все тесты были успешно пройдены.
+\section{Вывод}
+
+Были сформулированы требования к ПО, выбраны средства реализации и подготовлены тестовые данные.
+%%%% mode: latex
+%%%% TeX-master: "rpz"
+%%%% End:
