@@ -1,0 +1,11 @@
+# Fdb version 3
+["pdflatex"] 1576590216 "20-analysis.tex" "20-analysis.pdf" "20-analysis" 1576590216
+  "/etc/texmf/web2c/texmf.cnf" 1568463738 475 c0e671620eb5563b2130f56340a5fde8 ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1520210507 32485 c64754543d8ac501bea6e75e209ea521 ""
+  "/usr/share/texmf/web2c/texmf.cnf" 1520210507 32485 c64754543d8ac501bea6e75e209ea521 ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1570479845 4126981 00f6840eb900e38223f5434753905759 ""
+  "20-analysis.aux" 1576590212 4107 7ea8fa971780712d98dd5a483b304bdc ""
+  "20-analysis.tex" 1576590211 13510 bab050ad1dc5605b854593e3dbdd4db4 ""
+  (generated)
+  "20-analysis.pdf"
+  "20-analysis.log"

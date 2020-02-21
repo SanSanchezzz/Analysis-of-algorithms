@@ -1,0 +1,11 @@
+# Fdb version 3
+["pdflatex"] 1577217614 "30-design.tex" "30-design.pdf" "30-design" 1577217614
+  "/etc/texmf/web2c/texmf.cnf" 1568463738 475 c0e671620eb5563b2130f56340a5fde8 ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1520210507 32485 c64754543d8ac501bea6e75e209ea521 ""
+  "/usr/share/texmf/web2c/texmf.cnf" 1520210507 32485 c64754543d8ac501bea6e75e209ea521 ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1570479845 4126981 00f6840eb900e38223f5434753905759 ""
+  "30-design.aux" 1577217613 6222 eaef17ae040f8abe2110e86d620ddfad ""
+  "30-design.tex" 1577217611 4352 296b15ae2be236cee08358d3f5c3fdda ""
+  (generated)
+  "30-design.pdf"
+  "30-design.log"

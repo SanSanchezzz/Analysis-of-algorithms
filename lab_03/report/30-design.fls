@@ -1,0 +1,7 @@
+PWD /home/san_sanchez/workspace/AA/lab_03/report
+INPUT /etc/texmf/web2c/texmf.cnf
+INPUT /usr/share/texmf/web2c/texmf.cnf
+INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
+INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
+INPUT 30-design.tex
+OUTPUT 30-design.log
