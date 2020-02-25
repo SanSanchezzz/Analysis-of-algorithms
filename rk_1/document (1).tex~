@@ -1,0 +1,401 @@
+\documentclass[a4paper, 14pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{url}
+
+\usepackage{titlesec}
+\titleformat*{\section}{\LARGE\bfseries}
+\titleformat*{\subsection}{\Large\bfseries}
+\titleformat*{\subsubsection}{\large\bfseries}
+\titleformat*{\paragraph}{\large\bfseries}
+\titleformat*{\subparagraph}{\large\bfseries}
+
+
+
+\begin{document}
+	\begin{titlepage}
+		\begin{center}
+			\begin{LARGE}
+				Отчет по лабораторной работе №1\\
+					по курсу "Анализ алгоритмов"\\
+					по теме "Расстояние Левенштейна"
+			\end{LARGE}
+		
+			\begin{Large}
+				\vspace{10cm}
+				Студент: Гусев М.А. ИУ7-53\\
+					Преподаватель: Волкова Л.Л.,
+								   Строганов Ю.В.
+			\end{Large}
+		\end{center}
+	\end{titlepage}
+
+	\tableofcontents
+	
+	\newpage
+	\section{Постановка задачи}
+	Изучить, реализовать,сравнить три версии алгоритма Левенштейна поиска минимального редакционного расстояния
+	\begin{enumerate}
+	\item Рекурсивный алгоритм с тремя операциями (вставки, удаления, замены)
+	\item Итеративный алгоритм с тремя операциями
+	\item Итеративный алгоритм с четырьмя операциями (обмен двух соседних букв)
+	\end{enumerate}
+	
+	\newpage
+	\section{Описание алгоритмов}
+	Расстояние Левенштейна (также редакционное расстояние или дистанция редактирования) между двумя строками в теории информации и компьютерной лингвистике — это минимальное количество операций вставки одного символа, удаления одного символа и замены одного символа на другой, необходимых для превращения одной строки в другую.\\
+	Допустим,что существует две строки S1 и S2 над некоторым алфавитом. Длина одной из них - M, второй - N. Для нахождения расстояния Левенштейна между ними D(S1, S2) можно применить следующую формулу (D(S1, S2) == D(M, N))\cite{Wagner:1974:SCP:321796.321811}:
+	\[
+	  D(i,j)=\begin{cases}
+	               max(i,j)\ if\ min(i,j) == 0\\
+	               min\begin{cases}
+	               D(i,j-1) + 1\\
+	               D(i-1,j) + 1\\
+	               D(i-1,j-1) + (S1[i] <> S2[j])
+	               \end{cases}
+	            \end{cases}
+	\]
+	
+	Для случая с 4 операциями формула принимает следующий вид\cite{Damerau:1964:TCD:363958.363994}:
+	\[
+ 	D(i,j)=\begin{cases}
+             max(i,j)\ if\ min(i,j) == 0\\
+             min\begin{cases}
+             D(i,j-1) + 1\\
+             D(i-1,j) + 1\\
+          	 D(i-1,j-1) + (S1[i] <> S2[j])\\
+          	 D(i-2,j-2) + 1
+             \end{cases} \ if \ i,j>1\\
+             min\begin{cases}
+             D(i,j-1) + 1\\
+             D(i-1,j) + 1\\
+             D(i-1,j-1) + (S1[i] <> S2[j])
+             \end{cases}
+          \end{cases}
+	\]
+	\newpage
+	\section{Реализация алгоритмов}
+	Алгоритмы реализованы на с++.\\
+	Рекурсивный алгоритм\\
+	\lstset{language=C++,
+	                basicstyle=\ttfamily,
+	                keywordstyle=\color{blue}\ttfamily,
+	                stringstyle=\color{red}\ttfamily,
+	                commentstyle=\color{green}\ttfamily,
+	                morecomment=[l][\color{magenta}]{\#},
+	                columns=fullflexible
+	}
+	\begin{lstlisting}[frame=single, breaklines]
+int levensteinRecursive3(char* strOrig, char* strRes, unsigned long long& time) {
+
+	unsigned long long tickStart = __rdtsc();
+
+	unsigned lenOrig = strlen(strOrig);
+	if (lenOrig == 0) {
+		time = __rdtsc() - tickStart;
+		return strlen(strRes);
+	}
+	unsigned lenRes = strlen(strRes);
+	if (lenRes == 0) {
+		time = __rdtsc() - tickStart;
+		return lenOrig;
+	}
+
+	bool symbNotSame = false;
+	if (*strOrig != *strRes) {
+		symbNotSame = true;
+	}
+
+	int result = std::min(std::min(levensteinRecursive3(strOrig + 1, strRes, time) + 1,
+					levensteinRecursive3(strOrig, strRes + 1, time) + 1),
+					levensteinRecursive3(strOrig + 1, strRes + 1, time) + symbNotSame);
+
+	time = __rdtsc() - tickStart;
+
+	return result;
+}
+	\end{lstlisting}
+	\newpage
+	Итеративный алгоритм\\
+	\begin{lstlisting}[frame=single, breaklines]
+int levensteinIterative3(char* strOrig, char* strRes, unsigned long long& time) {
+	unsigned long long tickStart = __rdtsc();
+	unsigned lenOrig = strlen(strOrig);
+	if (lenOrig == 0) {
+		time = __rdtsc() - tickStart;
+		return strlen(strRes);
+	}
+	unsigned lenRes = strlen(strRes);
+	if (lenRes == 0) {
+		time = __rdtsc() - tickStart;
+		return lenOrig;
+	}
+
+	unsigned columns = lenRes + 1;
+	unsigned rows = lenOrig + 1;
+
+	int* storage[2];
+	storage[0] = new int[columns];
+	storage[1] = new int[columns];
+
+	for (unsigned i = 0; i < columns; ++i) {
+		storage[0][i] = i;
+	}
+
+	for (unsigned i = 1; i < rows; ++i) {
+		storage[1][0] = storage[0][0] + 1;
+		for (unsigned j = 1; j < columns; ++j) {
+			bool symbNotSame = false;
+			if (strRes[j - 1] != strOrig[i - 1]) {
+				symbNotSame = true;
+			}
+			storage[1][j] = std::min(std::min(storage[0][j] + 1,
+			storage[1][j - 1] + 1),
+			storage[0][j - 1] + symbNotSame);
+		}
+		std::swap(storage[0], storage[1]);
+	}
+	time = __rdtsc() - tickStart;
+	int result = storage[0][columns - 1];
+	delete storage[0];
+	delete storage[1];
+	return result;
+}
+	\end{lstlisting}
+	\newpage
+	Алгоритм с операцией транспозиции\\
+	\begin{lstlisting}[frame=single, breaklines]
+int levensteinIterative4(char* strOrig, char* strRes, unsigned long long& time) {
+
+	unsigned lenOrig = strlen(strOrig);
+	unsigned lenRes = strlen(strRes);
+
+	if (lenOrig < 2 || lenRes < 2) {
+		return levensteinIterative3(strOrig, strRes, time);
+	}
+
+	unsigned long long tickStart = __rdtsc();
+
+	unsigned columns = lenRes + 1;
+	unsigned rows = lenOrig + 1;
+
+	int* storage[3];
+	storage[0] = new int[columns];
+	storage[1] = new int[columns];
+	storage[2] = new int[columns];
+
+	for (unsigned i = 0; i < columns; ++i) {
+		storage[0][i] = i;
+	}
+
+	storage[1][0] = 1;
+	for (unsigned i = 1; i < columns; ++i) {
+		bool symbNotSame = false;
+		if (strRes[i - 1] != strOrig[0]) {
+			symbNotSame = true;
+		}
+
+		storage[1][i] = std::min(std::min(storage[0][i] + 1, storage[1][i - 1] + 1),
+				storage[0][i - 1] + symbNotSame);
+	}
+
+	for (unsigned i = 2; i < rows; ++i) {
+		storage[2][0] = storage[1][0] + 1;
+		bool symbNotSame = false;
+		if (strRes[0] != strOrig[i - 1]) {
+			symbNotSame = true;
+		}
+
+		storage[2][1] = std::min(std::min(storage[1][1] + 1, storage[2][0] + 1),
+				storage[1][0] + symbNotSame);
+
+		for (unsigned j = 2; j < columns; ++j) {
+			bool symbNotSame = false;
+			if (strRes[j - 1] != strOrig[i - 1]) {
+				symbNotSame = true;
+			}
+
+			storage[2][j] = std::min(std::min(std::min(storage[1][j] + 1, storage[2][j - 1] + 1),
+					storage[1][j - 1] + symbNotSame), storage[0][j - 2] + 1);
+		}
+
+		std::swap(storage[0], storage[1]);
+		std::swap(storage[1], storage[2]);
+	}
+
+	time = __rdtsc() - tickStart;
+
+	int result = storage[1][columns - 1];
+	delete storage[0];
+	delete storage[1];
+	delete storage[2];
+
+	return result;
+}
+	\end{lstlisting}
+	\newpage
+	\section{Примеры работы}
+	\begin{tabular} {l l r r r}
+	S1 & S2 & Рекур. & Итерат. & Транспоз.\\
+	"" & "" & 0 & 0 & 0\\
+	qwerty & "" & 6 & 6 & 6\\
+	manhattan & mahnattan & 2 & 2 & 1\\
+	delivery & delete & 4 & 4 & 3\\
+	average & dremora & 6 & 6 & 3\\
+	\end{tabular}
+	
+	\newpage
+	\section{Сравнение}
+	Рекурсивный против итеративного\\
+	Под S1 и S2 подразумевается количество символов\\
+	Единица измерения - clocks\\
+	Берется время прохождения 20 тестов\\
+	Сравнение идет на случайных строках размера 10\\
+	\\
+	\begin{tabular} {l r r}
+	LEV & Рекур. & Итерат.\\
+	6 & 9953 & 0\\
+	7  & 10686 & 0\\
+	9  & 10764 & 0\\
+	\end{tabular}
+	\\
+	\begin{tikzpicture}
+	\begin{axis}[
+	    xlabel={Levenstein distance},
+	    ylabel={Time in ticks},
+	    xmin=6, xmax=9,
+	    ymin=9000, ymax=15000,
+	    legend pos=north west,
+	    ymajorgrids=true,
+	    grid style=dashed,
+	]
+	 
+	\addplot[
+	    color=blue,
+	    mark=square,
+	    ]
+	    coordinates {
+	    (6,9953)(7,10686)(9, 13764)
+	    };
+	 
+	\end{axis}
+	\end{tikzpicture}
+	Сравнение на строках размера 3 и 10\\
+	Количество тестов повышено до 100\\
+	\\
+	\begin{tabular} {l r r}
+	LEV & Рекур. & Итерат.\\
+	7 & 15 & 0\\
+	8  & 15 & 0\\
+	9  & 15 & 0\\
+	\end{tabular}
+	\\
+	Дальнейшие замеры нецелесообразны, время выполнения рекурсивного алгоритма увеличивается экспоненциально, пропорционально количеству рекурсивных вызовов. При сходном размере строк рекурсивный алгоритм сильно проигрывает итеративному.
+	\\
+	\
+	Стандартный против модифицированного\\
+	Под S1 и S2 подразумевается количество символов\\
+	Единица измерения - clocks\\
+	Берется усреденное время на 100 тестов\\
+	Размер строк по 1000\\
+	\\
+	\begin{tabular} {l l r r}
+	LEV1 &  LEV2 & Станд. & Модиф.\\
+	30 & 24 & 46 & 47\\
+	33 & 27 & 42 & 47\\
+	34 & 26 & 46 & 63\\
+	79 & 47 & 46 & 47\\
+	89 & 49 & 46 & 47\\
+	\end{tabular}
+	\\\\
+	\begin{tikzpicture}
+		\begin{axis}[
+		    xlabel={Levenstein distance},
+		    ylabel={Time in ticks},
+		    ymin = 0, ymax = 100,
+		    legend pos=north west,
+		    ymajorgrids=true,
+		    grid style=dashed,
+		]
+		 
+		\addplot[
+		    color=blue,
+		    mark=square,
+		    ]
+		    coordinates {
+		    (30,46)(33,42)(34,46)(79,46)(89,46)
+		    };
+		    \legend{3}
+  		\addplot[
+  		    color=red,
+  		    mark=square,
+  		    ]
+  		    coordinates {
+  		    (24,47)(26,63)(27,47)(47,47)(49,47)
+  		    };
+		    \legend{4}
+		 
+		\end{axis}
+		\end{tikzpicture}
+	\\Размер строк 10 и 100
+	\\Количество тестов увеличено до 10000\\\\
+	\begin{tabular} {l l r r}
+	LEV1 &  LEV2 & Станд. & Модиф.\\
+	90 & 90 & 327 & 359\\
+	90 & 90 & 405 & 421\\
+	93 & 92 & 403 & 473\\
+	93 & 93 & 421 & 546\\
+	\end{tabular}
+	\\
+		\begin{tikzpicture}
+			\begin{axis}[
+			    xlabel={Levenstein distance},
+			    ylabel={Time in ticks},
+			    ymin=0,ymax=600,
+			    legend pos=north west,
+			    ymajorgrids=true,
+			    grid style=dashed,
+			]
+			 
+			\addplot[
+			    color=blue,
+			    mark=square,
+			    ]
+			    coordinates {
+			    (90,327)(90,405)(93,403)(93,421)
+			    };
+			    \legend{3}
+	  		\addplot[
+	  		    color=red,
+	  		    mark=square,
+	  		    ]
+	  		    coordinates {
+	  		    (90,359)(90,421)(92,473)(93,546)
+	  		    };
+			    \legend{4}
+			 
+			\end{axis}
+		\end{tikzpicture}
+	
+	\newpage
+	\section{Вывод}
+	Рекурсивный алгоритм при более простой реализации работает чрезвычайно долго, что делает его использование нецелесообразным. Итеративный алгоритм значительно превосходит его по эффективности.
+	Алгоритм с добавленной операцией работает дольше, т.к. имеет более сложную логику, но все равно значительно превосходит по скорости рекурсивный алгоритм.
+	
+	При этом различие между реализациями тем меньше, чем большая разница длины строк.
+	\newpage
+	\section*{Заключение}
+	В ходе работы было проведено сравнение алгоритмов поиска расстояния Левенштейна (рекурсивной и итеративной реализации) и Дамерау-Левеншнейна (итеративной реализации). Были исследованы зависимости времени выполнения программ, реализующих данные алгоритмы, от искомого расстояния и от размеров строк для случаев с одинаковой длиной исходных строк и случая, когда одна из строк значительно меньше другой. В ходе исследования были сделаны следующие выводы:
+		1) Рекурсивная реализация алгоритма Левенштейна выполняется за преемлимое время лишь в случаях, когда размер одной из строк крайне мал (до 10-15 символов)
+		2) Итеративные реализации алгоритмов поиска расстояний Дамерау-Левенштейна и Левенштейна имеют схожую ассимптитику, но алгоритм поиска расстояния Дамерау-Левенштейна из-за более сложной внутренней логики в среднем работает медленнее.
+
+	\newpage
+	\bibliographystyle{alpha}
+	\bibliography{mybib}
+	
+\end{document}

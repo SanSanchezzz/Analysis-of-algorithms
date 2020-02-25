@@ -1,0 +1,7 @@
+PWD /home/san_sanchez/workspace/AA/rk_1/report
+INPUT /etc/texmf/web2c/texmf.cnf
+INPUT /usr/share/texmf/web2c/texmf.cnf
+INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
+INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
+INPUT 20-analysis.tex
+OUTPUT 20-analysis.log

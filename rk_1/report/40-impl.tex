@@ -1,0 +1,84 @@
+\chapter{Технологический раздел}
+\label{cha:impl}
+
+В данном разделе приводятся описания требований к программному обеспечению, средства реализации, листинги кода и описания тестирования.
+
+\section{Требования к программному обеспечению}
+
+Требования к вводу:
+\begin{itemize}
+    \item блок размером n бит;
+    \item ключ размером k бит;
+\end{itemize}
+Требования к выводу:
+\begin{itemize}
+    \item зашифрованный блок размером n бит;
+\end{itemize}
+
+\section{Средства реализации}
+
+В качестве языка программирования был выбран C++. Данный язык имеет высокую ско-
+рость и богатую стандартную библиотеку, содержащую необходимые контейнеры для данной
+работы. Программа, написанная на C++, будет доступна на всех платформах.
+Для распараллеливания вычислений была использована библиотека с классом нативных
+потоков std::thread.
+
+\section{Листинги кода}
+
+В листинге 3.1 приведена реализация описанного алгоритма.
+\begin{lstlisting}[caption=Алгоритм шифрования DES]
+void Cipher(long long int msg,long long int key){
+	int f=0;
+	int keyr=(int)(key);
+	int keyl=(int)(key>>32);
+	cout<<"Key Left Int:= "<<keyl<<"  Key Right Int:= "<<keyr<<endl;
+	int c0=0,d0=0;
+	pKEY(keyl,keyr);
+	c0=keyl;
+	d0=keyr;
+	int kl=0,kr=0;
+	int r0=(int)(msg);
+	int l0=(int)(msg>>32);
+	cout<<"Msg Left Int:= "<<l0<<"  Msg Right Int:= "<<r0<<endl;
+	pIP(l0,r0);
+	for (int i=1;i<17;i++){
+		int t=2;
+		if (i==1||i==2||i==9||i==16){
+			t=1;
+		}
+        std::thread thr_c(thread_func, std::ref(c0), t);
+        std::thread thr_d(thread_func, std::ref(d0), t);
+
+        thr_c.join();
+        thr_d.join();
+		kl=c0;
+		kr=d0;
+		pSUBKEY(kl,kr);
+		int pl0=l0;
+		l0=r0;
+		r0=pl0^funcF(r0,kl,kr);
+	}
+	int rt=0;
+	rt=r0;
+	r0=l0;
+	l0=rt;
+	finalP(l0,r0);
+	long long int final=l0;
+	final=final<<32;
+	final+=r0;
+	cout<<"[  "<<"Cipher int:#### "<<hex<<final<<" ####\nChipher Left INT:=  "<<l0<<"  Right INT:= "<<r0 <<endl;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Функция шифрования в потоке]
+void thread_func(int *arg, int t)
+{
+    *arg = shiftL(*arg, 28, t);
+}
+\end{lstlisting}
+
+\section{Вывод}
+Были сформулированы требования к ПО, выбраны средства реализации.
+%%%% mode: latex
+%%%% TeX-master: "rpz"
+%%%% End:
